@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Orthography</title>
+<style>
+table {
+  width: 400px;
+  border-collapse: collapse;
+}
+
+td { 
+  justify-content: space-around;
+  font-family: 'Gentium Plus';
+  border: 1px solid gray;
+  text-align:center;
+}
+
+td span { 
+  display:inline-block;
+  cursor: pointer;
+  width: 1em;
+  text-align:center;
+}
+
+tbody th { 
+  text-align:right;
+}
+
+span.selected {
+  background:yellow;
+}
+</style>
+</head>
+<body>
+  <h1>Orthography</h1>
+<blockquote>
+  <p>This is a project to allow documentation projects to easily develop 
+a mapping between their practical or working orthographies and the IPA.
+The first step is to represent all the IPA characters featurally (I’ll 
+be representing that data as a JSON file, see <a href="../ipa/">this directory</a>). 
+The second step is to build an interface that allows users to 1) select the 
+relevant phones for the language they’re working with, and 2) specify 
+how those phones are represented orthographically. </p>
+<p>The planned output is a transliteration tool which can be used offline
+or online (a web-based orthographic input system) to type content in 
+arbitrary orthography, without losing the link to the semi-standardized
+notation encodedin the IPA.</p>
+<p>Note that this URL is temporary, it will probably end up on github 
+and somewhere else.</p>
+</blockquote>
+  <h2>Consonants</h2>
+  <p>coming soon…</p>
+  <h2>Vowels</h2>
+
+
+<table id=consonants></table>
+<table id=vowels></table>
+  
+
+<script src=js/common.js></script>
+<script src=js/fetch.js></script>
+<script>
+
+var render = ipa => {
+  let 
+    vowels = ipa.phones.filter(c => c.cv == 'vowel'),
+    table = document.createElement('table'),
+    tbody = document.createElement('tbody'),
+    frontnesses = ipa.frontness,
+    heights     = ipa.heights,
+    roundnesses = ipa.rounding;
+
+  table.id = 'vowels';
+  
+  heights.forEach(height => {
+    let row = document.createElement('tr');
+
+    frontnesses.forEach(frontness => {
+
+      let cell = document.createElement('td');
+
+      let criteria = {height: height, frontness: frontness};
+      let phones = where(vowels, criteria);
+
+      // ugh that repetition
+      if(phones.length){
+        let unround = phones.filter(p => p.rounding == 'unrounded')[0];
+        let round   = phones.filter(p => p.rounding == 'rounded')[0];
+
+        if(unround && unround.letter){
+          let span = document.createElement('span');
+          span.textContent = unround.letter;
+          span.dataset.rounding = unround.rounding;
+          span.dataset.frontness = unround.frontness;
+          span.dataset.height = unround.height;
+          cell.appendChild(span);
+        } 
+
+        if(round && round.letter){
+          let span = document.createElement('span');
+          span.textContent = round.letter;
+          span.dataset.rounding = round.rounding;
+          span.dataset.frontness = round.frontness;
+          span.dataset.height = round.height;
+          cell.appendChild(span);
+        } 
+      }
+      
+      row.appendChild(cell);
+      
+    })
+    
+    tbody.appendChild(row);
+  })
+
+  table.appendChild(tbody);
+
+
+  [...table.querySelectorAll('tr')].forEach((row,i) => {
+      let th = document.createElement('th');
+      th.textContent = heights[i];
+      row.insertBefore(th, row.querySelector('td'));
+  })
+
+  let thead = `<thead>
+   <tr> 
+     <th></th>
+     ${frontnesses.map(f => `<th>${f}</th>`).join('\n  ')}
+   </tr> 
+  </thead>`; 
+  table.insertAdjacentHTML('afterbegin', thead);
+ 
+  //tbody.insertBefore(header, tbody);
+  
+  
+  return table;
+}
+
+
+
+let listen = () => {
+  let vowelTable = document.querySelector('table#vowels');
+  app.byLetter = nest(app.ipa.phones, 'letter');
+  delete app.byLetter['letter']; // srslypplwtf
+
+  let spans = [...vowelTable.querySelectorAll('td span')];
+
+  spans.forEach(span => {
+    span.addEventListener('click', ev => {
+
+      var letter = ev.target.textContent;
+      let phone = app.byLetter[letter];
+      span.classList.toggle('selected');
+
+    });
+  }) 
+}
+
+window.app = {};
+
+fetch('../ipa/ipa.json')
+  .then(r => r.json())
+  .then(ipa => { 
+    app.ipa = ipa; 
+    var table = render(ipa); 
+    return table 
+  })
+  .then(table => { document.querySelector('table#vowels').outerHTML = table.outerHTML })
+  .then(listen)
+  .catch(e => console.log(e))
+
+</script>
+
+</body>
+</html>
