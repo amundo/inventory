@@ -67,16 +67,14 @@ var render = ipa => {
     vowels = ipa.phones.filter(c => c.cv == 'vowel'),
     table = document.createElement('table'),
     tbody = document.createElement('tbody'),
-    frontnesses = ipa.frontness,
-    heights     = ipa.heights,
     roundnesses = ipa.rounding;
 
   table.id = 'vowels';
   
-  heights.forEach(height => {
+  ipa.heights.forEach(height => {
     let row = document.createElement('tr');
 
-    frontnesses.forEach(frontness => {
+    ipa.frontness.forEach(frontness => {
 
       let cell = document.createElement('td');
 
@@ -119,14 +117,14 @@ var render = ipa => {
 
   [...table.querySelectorAll('tr')].forEach((row,i) => {
       let th = document.createElement('th');
-      th.textContent = heights[i];
+      th.textContent = ipa.heights[i];
       row.insertBefore(th, row.querySelector('td'));
   })
 
   let thead = `<thead>
    <tr> 
      <th></th>
-     ${frontnesses.map(f => `<th>${f}</th>`).join('\n  ')}
+     ${ipa.frontness.map(f => `<th>${f}</th>`).join('\n  ')}
    </tr> 
   </thead>`; 
   table.insertAdjacentHTML('afterbegin', thead);
