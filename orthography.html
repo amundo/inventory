@@ -49,34 +49,32 @@ notation encodedin the IPA.</p>
 <p>Note that this URL is temporary, it will probably end up on github 
 and somewhere else.</p>
 </blockquote>
+
   <h2>Consonants</h2>
-  <p>coming soon…</p>
+  <table id=consonants></table>
+
   <h2>Vowels</h2>
-
-
-<table id=consonants></table>
-<table id=vowels></table>
+  <table id=vowels></table>
   
 
 <script src=js/common.js></script>
 <script src=js/fetch.js></script>
 <script>
 
-var render = ipa => {
+var renderVowels = ipa => {
   let 
     vowels = ipa.phones.filter(c => c.cv == 'vowel'),
-    table = document.createElement('table'),
-    tbody = document.createElement('tbody'),
-    roundnesses = ipa.rounding;
+    table = document.createElement('table'), 
+    tbody = document.createElement('tbody'); 
 
   table.id = 'vowels';
   
   ipa.heights.forEach(height => {
-    let row = document.createElement('tr');
+    let row = document.createElement('tr'); 
 
     ipa.frontness.forEach(frontness => {
 
-      let cell = document.createElement('td');
+      let cell = document.createElement('td'); 
 
       let criteria = {height: height, frontness: frontness};
       let phones = where(vowels, criteria);
@@ -87,12 +85,12 @@ var render = ipa => {
         let round   = phones.filter(p => p.rounding == 'rounded')[0];
 
         if(unround && unround.letter){
-          let span = document.createElement('span');
-          span.textContent = unround.letter;
-          span.dataset.rounding = unround.rounding;
-          span.dataset.frontness = unround.frontness;
-          span.dataset.height = unround.height;
-          cell.appendChild(span);
+          let span = document.createElement('span'); 
+          span.textContent = unround.letter; 
+          span.dataset.rounding = unround.rounding; 
+          span.dataset.frontness = unround.frontness; 
+          span.dataset.height = unround.height; 
+          cell.appendChild(span); 
         } 
 
         if(round && round.letter){
@@ -135,14 +133,87 @@ var render = ipa => {
   return table;
 }
 
+var renderConsonants = ipa => {
+  let 
+    consonants = ipa.phones.filter(c => c.cv == 'consonant'),
+    table = document.createElement('table'), 
+    tbody = document.createElement('tbody'); 
+
+  table.id = 'consonants';
+  
+  ipa.manners.forEach(manner => {
+    let row = document.createElement('tr'); 
+
+    ipa.places.forEach(place => {
+
+      let cell = document.createElement('td'); 
+
+      let criteria = {manner: manner, place: place};
+      let phones = where(consonants, criteria);
+
+      // ugh that repetition
+      if(phones.length){
+        let unvoiced = phones.filter(p => p.voicing == 'unvoiced')[0];
+        let voiced   = phones.filter(p => p.voicing == 'voiced')[0];
+
+        if(unvoiced && unvoiced.letter){
+          let span = document.createElement('span'); 
+          span.textContent = unvoiced.letter; 
+          span.dataset.voiced = unvoiced.voiced; 
+          span.dataset.place = unvoiced.place; 
+          span.dataset.manner = unvoiced.manner; 
+          cell.appendChild(span); 
+        } 
+
+        if(voiced && voiced.letter){
+          let span = document.createElement('span');
+          span.textContent = voiced.letter;
+          span.dataset.voicing = voiced.voiced;
+          span.dataset.place = voiced.place;
+          span.dataset.manner = voiced.manner;
+          cell.appendChild(span);
+        } 
+      }
+      
+      row.appendChild(cell);
+      
+    })
+    
+    tbody.appendChild(row);
+  })
+
+  table.appendChild(tbody);
+
+
+  [...table.querySelectorAll('tr')].forEach((row,i) => {
+      let th = document.createElement('th');
+      th.textContent = ipa.manners[i];
+      row.insertBefore(th, row.querySelector('td'));
+  })
+
+  let thead = `<thead>
+   <tr> 
+     <th></th>
+     ${ipa.places.map(f => `<th>${f}</th>`).join('\n  ')}
+   </tr> 
+  </thead>`; 
+  table.insertAdjacentHTML('afterbegin', thead);
+ 
+  return table;
+}
+
 
 
 let listen = () => {
   let vowelTable = document.querySelector('table#vowels');
+  let consonantTable = document.querySelector('table#consonants');
   app.byLetter = nest(app.ipa.phones, 'letter');
   delete app.byLetter['letter']; // srslypplwtf
 
-  let spans = [...vowelTable.querySelectorAll('td span')];
+  let vowelSpans = [...vowelTable.querySelectorAll('td span')];
+  let consonantSpans = [...consonantTable.querySelectorAll('td span')];
+
+  var spans = vowelSpans.concat(consonantSpans);
 
   spans.forEach(span => {
     span.addEventListener('click', ev => {
@@ -161,10 +232,17 @@ fetch('../ipa/ipa.json')
   .then(r => r.json())
   .then(ipa => { 
     app.ipa = ipa; 
-    var table = render(ipa); 
-    return table 
+    var vowelHTML = renderVowels(ipa); 
+    var consonantHTML = renderConsonants(ipa); 
+    return { 
+      vowelTable: vowelHTML, 
+      consonantTable: consonantHTML
+    }
   })
-  .then(table => { document.querySelector('table#vowels').outerHTML = table.outerHTML })
+  .then(tables => { 
+    document.querySelector('table#vowels').outerHTML = tables.vowelTable.outerHTML,
+    document.querySelector('table#consonants').outerHTML = tables.consonantTable.outerHTML 
+  })
   .then(listen)
   .catch(e => console.log(e))
 
