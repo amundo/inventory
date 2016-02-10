@@ -153,15 +153,15 @@ var renderConsonants = ipa => {
 
       // ugh that repetition
       if(phones.length){
-        let unvoiced = phones.filter(p => p.voicing == 'unvoiced')[0];
+        let voiceless = phones.filter(p => p.voicing == 'voiceless')[0];
         let voiced   = phones.filter(p => p.voicing == 'voiced')[0];
 
-        if(unvoiced && unvoiced.letter){
+        if(voiceless && voiceless.letter){
           let span = document.createElement('span'); 
-          span.textContent = unvoiced.letter; 
-          span.dataset.voiced = unvoiced.voiced; 
-          span.dataset.place = unvoiced.place; 
-          span.dataset.manner = unvoiced.manner; 
+          span.textContent = voiceless.letter; 
+          span.dataset.voiced = voiceless.voiced; 
+          span.dataset.place = voiceless.place; 
+          span.dataset.manner = voiceless.manner; 
           cell.appendChild(span); 
         } 
 
